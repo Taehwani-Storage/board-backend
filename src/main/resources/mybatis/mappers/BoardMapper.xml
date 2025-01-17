@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mappers.BoardMapper">
+    <select id="selectByPage" resultType="boardDTO" parameterType="hashMap">
+        SELECT * FROM board
+        INNER JOIN user
+        ON board.writer_id = user.id
+        <!-- 게시글의 번호 순으로 정렬 -->
+        ORDER BY board.id DESC
+        <!-- #{}와 ${}의 차이는 #{}값을 ""안으로 포장하여 값을 나타내고 ${} 값을 그대로 표현} -->
+        LIMIT ${startRow}, ${limitSize}
+    </select>
+    <select id="selectMaxPage" resultType="int">
+        SELECT COUNT(*)
+        FROM board
+    </select>
+    <select id="selectOne" parameterType="string" resultType="boardDTO">
+        SELECT * FROM board
+        INNER JOIN user
+        ON board.writer_id = user.id
+        WHERE board.id = #{id}
+    </select>
+    <insert id="insert" parameterType="boardDTO" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO board(title, content, writer_id, nickname)
+        VALUES(#{title}, #{content}, #{writerId}, #{nickname})
+    </insert>
+    <update id="update" parameterType="boardDTO">
+        UPDATE board
+        SET title = #{title},
+        content = #{content},
+        writer_id = #{writerId},
+        nickname = #{nickname},
+        entry_date = NOW(),
+        modify_date = NOW()
+        WHERE id = #{id}
+    </update>
+    <delete id="delete" parameterType="string">
+        DELETE FROM board
+        WHERE id = #{id}
+    </delete>
+
+</mapper>

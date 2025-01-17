@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mappers.ReplyMapper">
+    <!-- 댓글은 역순으로 나오지 않음 -->
+    <select id="selectAll" parameterType="string" resultType="replyDTO">
+        SELECT * FROM reply
+        INNER JOIN user
+        ON reply.writer_id = user.id
+        WHERE reply.board_id = #{boardId}
+        ORDER BY reply.id ASC
+    </select>
+    <insert id="insert" parameterType="replyDTO">
+        INSERT INTO reply(content, writer_id, board_id)
+        VALUES(#{content}, #{writerId}, #{boardId})
+    </insert>
+    <update id="update" parameterType="replyDTO">
+        UPDATE reply
+        SET
+        content = #{content}
+        WHERE id = #{id}
+    </update>
+    <delete id="delete" parameterType="string">
+        DELETE FROM reply
+        WHERE id = #{id}
+    </delete>
+
+</mapper>
