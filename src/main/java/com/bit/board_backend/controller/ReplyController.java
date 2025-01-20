@@ -13,6 +13,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("api/reply/")
 @AllArgsConstructor
+@CrossOrigin("http://localhost:8081")
 public class ReplyController {
     private final ReplyService REPLY_SERVICE;
 

@@ -23,16 +23,13 @@
         WHERE board.id = #{id}
     </select>
     <insert id="insert" parameterType="boardDTO" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO board(title, content, writer_id, nickname)
-        VALUES(#{title}, #{content}, #{writerId}, #{nickname})
+        INSERT INTO board(title, content, writer_id)
+        VALUES(#{title}, #{content}, #{writerId})
     </insert>
     <update id="update" parameterType="boardDTO">
         UPDATE board
         SET title = #{title},
         content = #{content},
-        writer_id = #{writerId},
-        nickname = #{nickname},
-        entry_date = NOW(),
         modify_date = NOW()
         WHERE id = #{id}
     </update>

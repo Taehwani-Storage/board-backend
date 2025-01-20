@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,8 @@ import java.util.Map;
 @CrossOrigin("http://localhost:8081")
 public class BoardController {
     private final BoardService BOARD_SERVICE;
+    private final String LIST_FORMATTER = "yy-MM-dd HH:mm:ss";
+    private final String INDIV_FORMATTER = "yyyy년 MM월 dd일 HH시 mm분 ss초";
 
     @GetMapping("showAll/{page}")
     public Object showAll(@PathVariable String page) {
@@ -37,6 +40,11 @@ public class BoardController {
             resultMap.put("message", "Invalid page number");
         } else {
             resultMap.put("result", "success");
+            SimpleDateFormat formatter = new SimpleDateFormat(LIST_FORMATTER);
+            for(BoardDTO b : list) {
+                b.setFormattedEntryDate(formatter.format(b.getEntryDate()));
+                b.setFormattedModifyDate(formatter.format(b.getModifyDate()));
+            }
             resultMap.put("list", list);
 
             int maxPage = BOARD_SERVICE.selectMaxPage();
@@ -74,6 +82,9 @@ public class BoardController {
             resultMap.put("message", "Invalid board content");
         } else {
             resultMap.put("result", "success");
+            SimpleDateFormat sdf = new SimpleDateFormat(INDIV_FORMATTER);
+            boardDTO.setFormattedEntryDate(sdf.format(boardDTO.getEntryDate()));
+            boardDTO.setFormattedModifyDate(sdf.format(boardDTO.getModifyDate()));
             resultMap.put("boardDTO", boardDTO);
         }
 

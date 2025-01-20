@@ -13,4 +13,6 @@ public class BoardDTO {
     private String nickname;
     private Date entryDate;
     private Date modifyDate;
+    private String formattedEntryDate;
+    private String formattedModifyDate;
 }
