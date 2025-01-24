@@ -36,5 +36,5 @@ public class BoardBackendApplication {
 	public SqlSession sqlSession(SqlSessionFactory sqlSessionFactory) {
 		return new SqlSessionTemplate(sqlSessionFactory);
 	}
-
 }
+

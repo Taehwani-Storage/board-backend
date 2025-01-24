@@ -24,6 +24,16 @@ public class BoardService {
         return sqlSession.selectList(NAMESPACE + ".selectByPage", paramMap);
     }
 
+    // 전체 글 불러오기
+    public List<BoardDTO> selectAll() {
+        return sqlSession.selectList(NAMESPACE + ".selectAll");
+    }
+
+    // 전체 글 갯수 불러오기
+    public int countAll() {
+        return sqlSession.selectOne(NAMESPACE + ".selectMaxPage");
+    }
+
     // 최대 페이지 불러오기
     public int selectMaxPage() {
         int temp = sqlSession.selectOne(NAMESPACE + ".selectMaxPage");

@@ -14,12 +14,20 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/board/")
 @AllArgsConstructor
-@CrossOrigin("http://localhost:8081")
+@CrossOrigin("http://localhost:3000")
 public class BoardController {
     private final BoardService BOARD_SERVICE;
     private final String LIST_FORMATTER = "yy-MM-dd HH:mm:ss";
     private final String INDIV_FORMATTER = "yyyy년 MM월 dd일 HH시 mm분 ss초";
 
+    @GetMapping("showAll")
+    public Object showAll() {
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("list", BOARD_SERVICE.selectAll());
+        resultMap.put("total", BOARD_SERVICE.countAll());
+
+        return resultMap;
+    }
     @GetMapping("showAll/{page}")
     public Object showAll(@PathVariable String page) {
         Map<String, Object> resultMap = new HashMap<>();

@@ -12,6 +12,12 @@
         <!-- #{}와 ${}의 차이는 #{}값을 ""안으로 포장하여 값을 나타내고 ${} 값을 그대로 표현} -->
         LIMIT ${startRow}, ${limitSize}
     </select>
+    <select id="selectAll" resultType="boardDTO">
+        SELECT * FROM board
+        INNER JOIN user
+        ON board.writer_id = user.id
+        ORDER BY board.id DESC
+    </select>
     <select id="selectMaxPage" resultType="int">
         SELECT COUNT(*)
         FROM board

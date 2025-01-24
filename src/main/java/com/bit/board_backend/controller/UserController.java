@@ -12,7 +12,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/user/")
 @AllArgsConstructor
-@CrossOrigin("http://localhost:8081")
+@CrossOrigin("http://localhost:3000")
 public class UserController {
     private UserService USER_SERVICE;
 
@@ -47,7 +47,7 @@ public class UserController {
             resultMap.put("message", "Duplicated nickname");
         } else {
             USER_SERVICE.register(userDTO);
-            resultMap.put("result", "success!");
+            resultMap.put("result", "success");
         }
 
         return resultMap;
