@@ -25,4 +25,8 @@
         SELECT * FROM user
         WHERE email=#{email}
     </select>
+    <select id="loadByUsername" parameterType="string" resultType="userDTO">
+        SELECT * FROM user
+        WHERE username=#{username}
+    </select>
 </mapper>

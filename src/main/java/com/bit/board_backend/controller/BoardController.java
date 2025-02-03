@@ -1,9 +1,13 @@
 package com.bit.board_backend.controller;
 
 import com.bit.board_backend.model.BoardDTO;
+import com.bit.board_backend.model.UserDTO;
 import com.bit.board_backend.service.BoardService;
-import jakarta.servlet.http.HttpSession;
+import com.bit.board_backend.service.UserService;
+import com.bit.board_backend.util.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.SimpleDateFormat;
@@ -19,6 +23,8 @@ public class BoardController {
     private final BoardService BOARD_SERVICE;
     private final String LIST_FORMATTER = "yy-MM-dd HH:mm:ss";
     private final String INDIV_FORMATTER = "yyyy년 MM월 dd일 HH시 mm분 ss초";
+    private final JwtUtil JWT_UTIL;
+    private final UserService userService;
 
     @GetMapping("showAll")
     public Object showAll() {
@@ -100,8 +106,14 @@ public class BoardController {
     }
 
     @PostMapping("write")
-    public Object write(@RequestBody BoardDTO boardDTO) {
+    public Object write(@RequestBody BoardDTO boardDTO, HttpServletRequest request) {
         Map<String, Object> resultMap = new HashMap<>();
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+        String token = authHeader.substring(7);
+        String username = JWT_UTIL.validateToken(token);
+        UserDTO userDTO = userService.loadByUsername(username);
+        boardDTO.setWriterId(userDTO.getId());
 
         try {
             BOARD_SERVICE.insert(boardDTO);

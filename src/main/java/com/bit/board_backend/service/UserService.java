@@ -31,4 +31,8 @@ public class UserService {
         sqlSession.selectOne(NAMESPACE + ".register", userDTO);
     }
 
+    public UserDTO loadByUsername(String username) {
+        return sqlSession.selectOne(NAMESPACE + ".loadByUsername", username);
+    }
+
 }

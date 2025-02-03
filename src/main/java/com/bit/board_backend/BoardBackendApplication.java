@@ -10,9 +10,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import javax.sql.DataSource;
-import java.io.IOException;
 
 @SpringBootApplication
 public class BoardBackendApplication {
@@ -35,6 +35,11 @@ public class BoardBackendApplication {
 	@Bean
 	public SqlSession sqlSession(SqlSessionFactory sqlSessionFactory) {
 		return new SqlSessionTemplate(sqlSessionFactory);
+	}
+
+	@Bean
+	public BCryptPasswordEncoder BCryptPasswordEncoder() {
+		return new BCryptPasswordEncoder();
 	}
 }
 
