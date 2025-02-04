@@ -1,103 +1,243 @@
-# Spring 학습 가이드 🚀
+# Spring 게시판 미니 프로젝트 (백엔드) 🚀
 
-## 1. Spring 기본 문법 🏗️
-Spring을 활용하여 게시판을 구현하는 데 필요한 개념을 학습합니다.
+## 프로젝트 개요
+Spring Boot와 MyBatis를 활용하여 **게시판**을 구현하며,
+**Spring Security**와 **JWT**를 적용하여 인증 및 인가 기능을 추가한 프로젝트
+---
 
-### 1.1. Spring Boot 프로젝트 설정 ⚙️
-Spring Boot를 사용하여 빠르게 개발 환경을 구축할 수 있습니다.
-```bash
-spring init --dependencies=web,data-jpa,h2,lombok spring-board
+## 📂 프로젝트 구조
+```
+src 
+├── main
+    │ ├── java/com/bit/boardbackend
+    │ │ ├── controller
+    │ │ │ ├── BoardController.java
+    │ │ │ ├── ReplyController.java
+    │ │ │ ├── UserController.java
+    │ │ │ 
+    │ │ ├── model
+    │ │ │ ├── BoardDTO.java
+    │ │ │ ├── ReplyDTO.java
+    │ │ │ ├── User.java
+    │ │ │ ├── UserDTO.java
+    │ │ │ 
+    │ │ ├── repository
+    │ │ │ ├── UserRepository.java 
+    │ │ │ 
+    │ │ ├── security
+    │ │ │ ├── AuthConfig.java        # OAuth2 설정
+    │ │ │ ├── CorsConfig.java        # CORS 정책 설정
+    │ │ │ ├── JwtAuthFilter.java     # JWT 검증 필터
+    │ │ │ ├── SecurityConfig.java    # Security 전체 설정
+    │ │ │ 
+    │ │ ├── service
+    │ │ │ ├── BoardService.java
+    │ │ │ ├── ReplyService.java
+    │ │ │ ├── UserService.java
+    │ │ │ ├── UserDetailServiceImpl.java # 사용자 인증 서비스
+    │ │ │ 
+    │ │ ├── util
+    │ │ │ ├── JwtUtil.java           # JWT 생성/검증 유틸리티
+    │ │ │ 
+    │ │ ├── resources
+    │ │ │ ├── mybatis
+    │ │ │ │ ├── mappers
+    │ │ │ │ │ ├── BoardMapper.xml
+    │ │ │ │ │ ├── ReplyMapper.xml
+    │ │ │ │ │ ├── UserMapper.xml
+    │ │ │ ├── application.properties
 ```
 
-### 1.2. 컨트롤러, 서비스, 리포지토리 패턴 🏛️
-Spring에서는 MVC 패턴을 기반으로 애플리케이션을 구성합니다.
+## 🔒 Spring Security + JWT 인증 흐름
+1. **로그인 요청** → `UserController.login()`
+2. **인증 성공 시** → `JwtUtil.generateToken()`으로 JWT 생성
+3. **응답 헤더에 JWT 추가** (`Authorization: Bearer <token>`)
+4. **클라이언트는 이후 요청마다 JWT 전송**
+5. **JwtAuthFilter에서 토큰 검증** → `JwtUtil.validateToken()`
+6. **SecurityContext에 인증 정보 저장**
 
-#### 1.2.1. 컨트롤러 (Controller)
+---
+
+## 🛠️ 주요 Security 컴포넌트 설명
+
+### 1. SecurityConfig.java
+```java
+@Configuration
+@EnableWebSecurity
+@RequiredArgsConstructor
+public class SecurityConfig {
+
+    private final JwtAuthFilter jwtAuthFilter;
+    
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf().disable()
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and()
+            .authorizeRequests()
+                .antMatchers("/api/auth/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                .anyRequest().authenticated()
+            .and()
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        
+        return http.build();
+    }
+}
+```
+
+### 2. JwtUtil.java (토큰 관리)
+```java
+@Component
+public class JwtUtil {
+    @Value("${jwt.secret}")
+    private String secretKey;
+    
+    // 토큰 생성
+    public String generateToken(String username) {
+        return Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1시간
+                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .compact();
+    }
+
+    // 토큰 검증
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
+            return true;
+        } catch (Exception e) {
+            throw new JwtException("유효하지 않은 토큰");
+        }
+    }
+}
+```
+
+### 3. JwtAuthFilter.java (요청 필터링)
+```java
+@Component
+@RequiredArgsConstructor
+public class JwtAuthFilter extends OncePerRequestFilter {
+
+    private final JwtUtil jwtUtil;
+    private final UserDetailServiceImpl userDetailsService;
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, 
+                                    HttpServletResponse response, 
+                                    FilterChain filterChain) throws ServletException, IOException {
+        
+        String token = resolveToken(request);
+        
+        if (token != null && jwtUtil.validateToken(token)) {
+            String username = jwtUtil.extractUsername(token);
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            
+            UsernamePasswordAuthenticationToken authentication = 
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
+        
+        filterChain.doFilter(request, response);
+    }
+
+    private String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
+}
+```
+
+---
+
+## 📝 UserController.java (로그인 처리)
 ```java
 @RestController
-@RequestMapping("/posts")
-public class PostController {
-    private final PostService postService;
-    
-    public PostController(PostService postService) {
-        this.postService = postService;
-    }
-    
-    @GetMapping
-    public List<Post> getPosts() {
-        return postService.getAllPosts();
-    }
-}
-```
+@RequestMapping("/api/auth")
+@RequiredArgsConstructor
+public class UserController {
 
-#### 1.2.2. 서비스 (Service)
-```java
-@Service
-public class PostService {
-    private final PostRepository postRepository;
-    
-    public PostService(PostRepository postRepository) {
-        this.postRepository = postRepository;
-    }
-    
-    public List<Post> getAllPosts() {
-        return postRepository.findAll();
+    private final UserService userService;
+    private final JwtUtil jwtUtil;
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody UserDTO.LoginRequest dto) {
+        User user = userService.authenticateUser(dto.getUsername(), dto.getPassword());
+        
+        String token = jwtUtil.generateToken(user.getUsername());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                .body(Map.of("message", "로그인 성공"));
     }
 }
 ```
 
-#### 1.2.3. 리포지토리 (Repository)
-```java
-@Repository
-public interface PostRepository extends JpaRepository<Post, Long> {}
+---
+
+## ⚙️ application.properties 설정
+```properties
+# JWT 설정
+jwt.secret=mySecretKey123!@#  # 실제 운영환경에서는 환경변수 사용 권장
+jwt.expiration=3600000        # 1시간(ms)
+
+# DB 설정
+spring.datasource.url=jdbc:h2:mem:boarddb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+
+# MyBatis
+mybatis.mapper-locations=classpath:mybatis/mappers/*.xml
+mybatis.type-aliases-package=com.bit.boardbackend.model
 ```
 
-## 2. 게시글 목록 보기 📃
-Spring을 이용하여 게시글 목록을 가져오는 API를 구현합니다.
-```java
-@GetMapping("/posts")
-public List<Post> getPosts() {
-    return postService.getAllPosts();
-}
+---
+
+## 🔄 프론트엔드 연동 가이드
+1. **로그인 성공 시 응답 헤더에서 JWT 추출**
+```javascript
+axios.post('/api/auth/login', {username, password})
+  .then(res => {
+    const token = res.headers['authorization'].split(' ')[1];
+    localStorage.setItem('jwtToken', token);
+  })
 ```
 
-## 3. 게시글 추가, 수정, 삭제, 댓글 기능 ✍️
-### 3.1. 게시글 추가
-```java
-@PostMapping("/posts")
-public Post createPost(@RequestBody Post post) {
-    return postRepository.save(post);
-}
+2. **API 요청 시 헤더에 JWT 추가**
+```javascript
+axios.interceptors.request.use(config => {
+  const token = localStorage.getItem('jwtToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 ```
 
-### 3.2. 게시글 수정
-```java
-@PutMapping("/posts/{id}")
-public Post updatePost(@PathVariable Long id, @RequestBody Post updatedPost) {
-    return postService.updatePost(id, updatedPost);
-}
+3. **토큰 만료 시 자동 로그아웃 처리**
+```javascript
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response.status === 401) {
+      localStorage.removeItem('jwtToken');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 ```
 
-### 3.3. 게시글 삭제
-```java
-@DeleteMapping("/posts/{id}")
-public void deletePost(@PathVariable Long id) {
-    postService.deletePost(id);
-}
-```
-
-### 3.4. 댓글 기능
-```java
-@PostMapping("/posts/{postId}/comments")
-public Comment addComment(@PathVariable Long postId, @RequestBody Comment comment) {
-    return commentService.addComment(postId, comment);
-}
-```
-
-## 4. RESTful API를 활용한 게시판 기능 🌐
+## 🌐 RESTful API를 활용한 게시판 기능
 RESTful API를 통해 클라이언트와 서버가 효율적으로 통신할 수 있도록 합니다.
 
-### 4.1. API 설계 예시
+### API 설계
 | 기능       | HTTP 메서드 | 엔드포인트        | 요청 데이터 | 응답 데이터 |
 |------------|------------|-------------------|-------------|-------------|
 | 게시글 목록 | GET        | `/posts`          | 없음        | 게시글 목록 |
@@ -106,5 +246,4 @@ RESTful API를 통해 클라이언트와 서버가 효율적으로 통신할 수
 | 게시글 삭제 | DELETE     | `/posts/{id}`     | 없음        | 없음       |
 | 댓글 추가   | POST       | `/posts/{id}/comments` | 댓글 정보 | 생성된 댓글 |
 
-## 5. 결론 🎯
-이 가이드를 통해 Spring을 활용한 게시판을 구축하는 방법을 익힐 수 있습니다. 데이터베이스 연동, 보안, 성능 최적화 등의 추가 학습을 진행하면 더욱 완성도 높은 애플리케이션을 만들 수 있습니다.
+
