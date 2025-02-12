@@ -183,14 +183,14 @@ public class UserController {
 ## ⚙️ application.properties 설정
 ```properties
 # JWT 설정
-jwt.secret=mySecretKey123!@#  # 실제 운영환경에서는 환경변수 사용 권장
-jwt.expiration=3600000        # 1시간(ms)
+jwt.secret=mySecretKey123!@#  # 임의로 정한 키 값
+jwt.expiration=3600000        # 임의로 정한 1시간(ms)
 
 # DB 설정
-spring.datasource.url=jdbc:h2:mem:boarddb
-spring.datasource.driverClassName=org.h2.Driver
-spring.datasource.username=sa
-spring.datasource.password=
+spring.datasource.url=jdbc:mysql://localhost:3306/board
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.datasource.username=(DB사용자 이름)
+spring.datasource.password=(DB사용자 비밀번호)
 
 # MyBatis
 mybatis.mapper-locations=classpath:mybatis/mappers/*.xml
