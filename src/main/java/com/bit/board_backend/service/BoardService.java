@@ -13,7 +13,7 @@ import java.util.List;
 public class BoardService {
     private SqlSession sqlSession;
     private final String NAMESPACE = "mappers.BoardMapper";
-    private final int SIZE = 15;
+    private final int SIZE = 10;
 
     // 페이지에 따라 게시글 목록 불러오기
     public List<BoardDTO> selectByPage(int page) {

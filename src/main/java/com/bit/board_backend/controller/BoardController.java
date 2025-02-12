@@ -86,7 +86,7 @@ public class BoardController {
     }
 
     @GetMapping("showOne/{id}")
-    public Object showOne(@PathVariable String id) {
+    public Object showOne(@PathVariable String id, HttpServletRequest request) {
         Map<String, Object> resultMap = new HashMap<>();
 
         BoardDTO boardDTO = BOARD_SERVICE.selectOne(id);
@@ -99,6 +99,14 @@ public class BoardController {
             SimpleDateFormat sdf = new SimpleDateFormat(INDIV_FORMATTER);
             boardDTO.setFormattedEntryDate(sdf.format(boardDTO.getEntryDate()));
             boardDTO.setFormattedModifyDate(sdf.format(boardDTO.getModifyDate()));
+
+            String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+            String token = authHeader.substring(7);
+            String username = JWT_UTIL.validateToken(token);
+            UserDTO userDTO = userService.loadByUsername(username);
+
+            boardDTO.setOwned(boardDTO.getWriterId() == userDTO.getId());
+
             resultMap.put("boardDTO", boardDTO);
         }
 

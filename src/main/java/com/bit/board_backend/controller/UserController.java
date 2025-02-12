@@ -3,7 +3,6 @@ package com.bit.board_backend.controller;
 import com.bit.board_backend.model.UserDTO;
 import com.bit.board_backend.service.UserService;
 import com.bit.board_backend.util.JwtUtil;
-import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -44,8 +43,6 @@ public class UserController {
     // 회원 가입 요청에 대한 결과 처리
     @PostMapping("register")
     public Object register(@RequestBody UserDTO userDTO) {
-        System.out.println(userDTO);
-
         Map<String, Object> resultMap = new HashMap<>();
 
         if (!USER_SERVICE.validateUsername(userDTO)) {

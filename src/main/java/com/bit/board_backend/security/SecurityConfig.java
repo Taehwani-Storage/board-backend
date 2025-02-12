@@ -3,7 +3,6 @@ package com.bit.board_backend.security;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -27,7 +26,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(req -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.addAllowedOrigin("http://localhost:3000");
+                    config.addAllowedOrigin("*");
                     config.addAllowedMethod("*");
                     config.addAllowedHeader("*");
 

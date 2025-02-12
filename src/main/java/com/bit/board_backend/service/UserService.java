@@ -2,8 +2,8 @@ package com.bit.board_backend.service;
 
 import com.bit.board_backend.model.UserDTO;
 import lombok.AllArgsConstructor;
-import org.apache.catalina.User;
 import org.apache.ibatis.session.SqlSession;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 public class UserService {
     private final String NAMESPACE = "mappers.UserMapper";
     private SqlSession sqlSession;
+    private final BCryptPasswordEncoder ENCODER;
 
     // 데이터베이스와 통신하여 username, pw가 같은 회원 찾기
     public UserDTO auth(UserDTO userDTO) {
@@ -28,6 +29,7 @@ public class UserService {
 
     // 회원가입 하기
     public void register(UserDTO userDTO) {
+        userDTO.setPassword(ENCODER.encode(userDTO.getPassword()));
         sqlSession.selectOne(NAMESPACE + ".register", userDTO);
     }
 

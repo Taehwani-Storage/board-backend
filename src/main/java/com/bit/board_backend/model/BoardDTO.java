@@ -15,4 +15,5 @@ public class BoardDTO {
     private Date modifyDate;
     private String formattedEntryDate;
     private String formattedModifyDate;
+    private boolean isOwned;
 }
